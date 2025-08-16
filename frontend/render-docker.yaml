@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: reelranker-frontend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://reel-ranker.onrender.com
+      - key: REACT_APP_ENVIRONMENT
+        value: production
+      - key: NODE_ENV
+        value: production
+      - key: GENERATE_SOURCEMAP
+        value: false
+    healthCheckPath: /
+    autoDeploy: true
