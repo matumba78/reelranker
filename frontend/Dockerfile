@@ -4,13 +4,13 @@ FROM node:22-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package.json and package-lock.json first
+COPY package.json package-lock.json ./
 
-# Install dependencies using npm install (more reliable than npm ci)
+# Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy all source files
 COPY . .
 
 # Build the application
