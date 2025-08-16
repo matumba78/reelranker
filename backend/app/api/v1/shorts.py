@@ -19,50 +19,66 @@ async def get_trending_shorts(
 ):
     """Get trending video shorts"""
     try:
-        # Mock data for development
-        mock_videos = [
-            {
-                "video_id": "abc123",
-                "title": "How the World Celebrates Indian Independence",
-                "views": 9000000,
-                "likes": 300000,
-                "tags": ["IndependenceDay", "India", "History"],
-                "hashtags": ["#IndependenceDay", "#India", "#Shorts"],
-                "published_at": "2025-08-10T10:00:00Z",
-                "engagement_rate": 0.035
-            },
-            {
-                "video_id": "def456",
-                "title": "The Shocking Truth About AI Technology",
-                "views": 7500000,
-                "likes": 250000,
-                "tags": ["AI", "Technology", "Future"],
-                "hashtags": ["#AI", "#Technology", "#Shorts"],
-                "published_at": "2025-08-09T15:30:00Z",
-                "engagement_rate": 0.032
-            },
-            {
-                "video_id": "ghi789",
-                "title": "Why Everyone is Talking About This",
-                "views": 6000000,
-                "likes": 200000,
-                "tags": ["Trending", "Viral", "News"],
-                "hashtags": ["#Trending", "#Viral", "#Shorts"],
-                "published_at": "2025-08-08T12:00:00Z",
-                "engagement_rate": 0.028
-            }
-        ]
+        youtube_service = YouTubeService()
         
-        # Filter by topic if provided
+        # Use real YouTube API to get trending videos
         if topic:
-            filtered_videos = [v for v in mock_videos if topic.lower() in v["title"].lower()]
+            # Search for videos with the topic
+            videos = youtube_service.search_shorts(topic, limit, region)
         else:
-            filtered_videos = mock_videos
+            # Get trending videos
+            videos = youtube_service.get_trending_videos(region, "1")  # Category 1 = Film & Animation
         
-        return {
-            "topic": topic or "trending",
-            "videos": filtered_videos[:limit]
-        }
+        # Get detailed information for the videos
+        if videos:
+            video_ids = [video['video_id'] for video in videos[:limit]]
+            detailed_videos = youtube_service.get_video_details(video_ids)
+            
+            # Format the response
+            formatted_videos = []
+            for video in detailed_videos:
+                engagement_rate = 0.0
+                if video.get('views', 0) > 0:
+                    engagement_rate = (video.get('likes', 0) + video.get('comments', 0)) / video.get('views', 1)
+                
+                formatted_video = {
+                    "video_id": video['video_id'],
+                    "title": video['title'],
+                    "views": video.get('views', 0),
+                    "likes": video.get('likes', 0),
+                    "tags": [topic] if topic else [],
+                    "hashtags": ["#Shorts", "#Viral", "#Trending"],
+                    "published_at": video['published_at'],
+                    "engagement_rate": round(engagement_rate, 4),
+                    "channel_title": video['channel_title'],
+                    "thumbnail_url": video['thumbnail_url']
+                }
+                formatted_videos.append(formatted_video)
+            
+            return {
+                "topic": topic or "trending",
+                "videos": formatted_videos,
+                "source": "youtube_api"
+            }
+        else:
+            # Fallback to mock data if YouTube API fails
+            mock_videos = [
+                {
+                    "video_id": "abc123",
+                    "title": "How the World Celebrates Indian Independence",
+                    "views": 9000000,
+                    "likes": 300000,
+                    "tags": ["IndependenceDay", "India", "History"],
+                    "hashtags": ["#IndependenceDay", "#India", "#Shorts"],
+                    "published_at": "2025-08-10T10:00:00Z",
+                    "engagement_rate": 0.035
+                }
+            ]
+            return {
+                "topic": topic or "trending",
+                "videos": mock_videos[:limit],
+                "source": "mock_data"
+            }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

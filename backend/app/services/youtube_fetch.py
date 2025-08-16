@@ -1,6 +1,6 @@
 import requests
 from typing import List, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 from app.core.config import settings

@@ -1,26 +1,23 @@
-import openai
 from typing import List, Dict, Optional
 import logging
 import re
 
 from app.core.config import settings
 from app.core.constants import VIRAL_TITLE_PATTERNS, HASHTAG_CATEGORIES
+from app.services.ai_provider import AIService
 
 logger = logging.getLogger(__name__)
 
 class AIGenerationService:
     def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
-        self.model = settings.MODEL_NAME
-        
-        if self.api_key:
-            openai.api_key = self.api_key
+        self.ai_service = AIService()
+        self.provider_info = self.ai_service.get_provider_info()
     
     def generate_viral_titles(self, topic: str, count: int = 10, style: str = "viral") -> List[Dict]:
         """Generate viral titles for a given topic"""
         try:
-            if not self.api_key:
-                logger.warning("OpenAI API key not configured, using fallback patterns")
+            if not self.provider_info["available"]:
+                logger.warning(f"{self.provider_info['provider']} API key not configured, using fallback patterns")
                 return self._generate_fallback_titles(topic, count)
             
             prompt = f"""
@@ -38,17 +35,12 @@ class AIGenerationService:
             Return only the titles, one per line, with no numbering or extra text.
             """
             
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are an expert at creating viral YouTube Shorts titles that drive high engagement and views."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=500,
-                temperature=0.8
-            )
+            messages = [
+                {"role": "system", "content": "You are an expert at creating viral YouTube Shorts titles that drive high engagement and views."},
+                {"role": "user", "content": prompt}
+            ]
             
-            titles_text = response.choices[0].message.content.strip()
+            titles_text = self.ai_service.generate_text(messages, max_tokens=500, temperature=0.8)
             titles = [title.strip() for title in titles_text.split('\n') if title.strip()]
             
             # Calculate viral scores for each title
@@ -72,8 +64,8 @@ class AIGenerationService:
     def generate_hashtags(self, topic: str, titles: Optional[List] = None, count: int = 10) -> List[str]:
         """Generate relevant hashtags for a topic"""
         try:
-            if not self.api_key:
-                logger.warning("OpenAI API key not configured, using fallback hashtags")
+            if not self.provider_info["available"]:
+                logger.warning(f"{self.provider_info['provider']} API key not configured, using fallback hashtags")
                 return self._generate_fallback_hashtags(topic, count)
             
             # Extract keywords from titles if provided
@@ -102,17 +94,12 @@ class AIGenerationService:
             Return only the hashtags, one per line, with no extra text.
             """
             
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are an expert at creating viral hashtags for social media content."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=300,
-                temperature=0.7
-            )
+            messages = [
+                {"role": "system", "content": "You are an expert at creating viral hashtags for social media content."},
+                {"role": "user", "content": prompt}
+            ]
             
-            hashtags_text = response.choices[0].message.content.strip()
+            hashtags_text = self.ai_service.generate_text(messages, max_tokens=300, temperature=0.7)
             hashtags = [tag.strip() for tag in hashtags_text.split('\n') if tag.strip()]
             
             # Add some standard hashtags
@@ -130,8 +117,8 @@ class AIGenerationService:
     def analyze_topic(self, topic: str, limit: int = 50) -> Dict:
         """Analyze a topic and provide insights"""
         try:
-            if not self.api_key:
-                logger.warning("OpenAI API key not configured, using fallback analysis")
+            if not self.provider_info["available"]:
+                logger.warning(f"{self.provider_info['provider']} API key not configured, using fallback analysis")
                 return self._generate_fallback_analysis(topic)
             
             prompt = f"""
@@ -150,20 +137,16 @@ class AIGenerationService:
             - trending_keywords: list of keywords
             """
             
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are an expert at analyzing social media trends and viral content patterns."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=800,
-                temperature=0.5
-            )
+            messages = [
+                {"role": "system", "content": "You are an expert at analyzing social media trends and viral content patterns."},
+                {"role": "user", "content": prompt}
+            ]
             
             # Parse JSON response
             import json
             try:
-                analysis = json.loads(response.choices[0].message.content.strip())
+                response_text = self.ai_service.generate_text(messages, max_tokens=800, temperature=0.5)
+                analysis = json.loads(response_text.strip())
                 return analysis
             except json.JSONDecodeError:
                 logger.error("Failed to parse AI response as JSON")

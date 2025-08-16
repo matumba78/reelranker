@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     
     # AI/ML Configuration
     OPENAI_API_KEY: Optional[str] = None
-    MODEL_NAME: str = "gpt-3.5-turbo"
+    DEEPSEEK_API_KEY: Optional[str] = None
+    GOOGLE_AI_API_KEY: Optional[str] = None
+    MODEL_NAME: str = "gemini-1.5-flash"  # Options: "gemini-1.5-flash", "gemini-1.5-flash-8b"
+    AI_PROVIDER: str = "google"  # Options: "openai", "deepseek", "google"
     
     # Redis Configuration
     REDIS_URL: str = "redis://localhost:6379"

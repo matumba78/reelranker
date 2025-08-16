@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -15,6 +15,7 @@ class GenerateResponse(BaseModel):
     titles: List[dict]
     hashtags: List[str]
     topic: str
+    provider: Optional[str] = None
 
 @router.post("/", response_model=GenerateResponse)
 async def generate_viral_content(request: GenerateRequest):
@@ -38,10 +39,14 @@ async def generate_viral_content(request: GenerateRequest):
             titles=titles
         )
         
+        # Get provider info
+        provider_info = ai_service.ai_service.get_provider_info()
+        
         return GenerateResponse(
             titles=titles,
             hashtags=hashtags,
-            topic=request.topic
+            topic=request.topic,
+            provider=provider_info["provider"]
         )
         
     except Exception as e:
