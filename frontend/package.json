@@ -20,6 +20,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build:render": "bash scripts/build-render.sh",
     "build:analyze": "GENERATE_SOURCEMAP=false npm run build && npx serve -s build",
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
