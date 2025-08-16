@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 AI Provider Service for ReelRanker
-Supports multiple AI providers (OpenAI, DeepSeek, Google AI Studio)
+Supports Google AI Studio (Gemini)
 """
 
-import openai
 import requests
 import logging
 import google.generativeai as genai
@@ -28,77 +27,6 @@ class AIProvider(ABC):
     def is_available(self) -> bool:
         """Check if the provider is available and configured"""
         pass
-
-class OpenAIProvider(AIProvider):
-    """OpenAI API provider"""
-    
-    def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
-        self.model = "gpt-3.5-turbo"
-        
-        if self.api_key:
-            openai.api_key = self.api_key
-    
-    def is_available(self) -> bool:
-        return bool(self.api_key)
-    
-    def generate_text(self, messages: List[Dict[str, str]], max_tokens: int = 500, temperature: float = 0.8) -> str:
-        """Generate text using OpenAI API"""
-        try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
-            raise
-
-class DeepSeekProvider(AIProvider):
-    """DeepSeek API provider"""
-    
-    def __init__(self):
-        self.api_key = settings.DEEPSEEK_API_KEY
-        self.base_url = "https://api.deepseek.com/v1/chat/completions"
-        self.model = "deepseek-chat"
-    
-    def is_available(self) -> bool:
-        return bool(self.api_key)
-    
-    def generate_text(self, messages: List[Dict[str, str]], max_tokens: int = 500, temperature: float = 0.8) -> str:
-        """Generate text using DeepSeek API"""
-        try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": self.model,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature
-            }
-            
-            response = requests.post(
-                self.base_url,
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                return data["choices"][0]["message"]["content"].strip()
-            else:
-                logger.error(f"DeepSeek API error: {response.status_code} - {response.text}")
-                raise Exception(f"DeepSeek API error: {response.status_code}")
-                
-        except Exception as e:
-            logger.error(f"DeepSeek API error: {e}")
-            raise
 
 class GoogleAIProvider(AIProvider):
     """Google AI Studio (Gemini) API provider"""
@@ -176,39 +104,16 @@ class AIProviderFactory:
         if provider_name is None:
             provider_name = settings.AI_PROVIDER
         
-        # Try Google AI Studio first (default)
+        # Use Google AI Studio (default and only provider)
         if provider_name.lower() == "google":
             provider = GoogleAIProvider(model_name=model_name)
             if provider.is_available():
                 return provider
             else:
-                logger.warning("Google AI Studio not available, falling back to DeepSeek")
-        
-        # Try DeepSeek
-        if provider_name.lower() == "deepseek":
-            provider = DeepSeekProvider()
-            if provider.is_available():
-                return provider
-            else:
-                logger.warning("DeepSeek not available, falling back to OpenAI")
-        
-        # Try OpenAI
-        if provider_name.lower() == "openai":
-            provider = OpenAIProvider()
-            if provider.is_available():
-                return provider
-        
-        # Fallback chain: Google AI -> DeepSeek -> OpenAI
-        providers_to_try = [GoogleAIProvider, DeepSeekProvider, OpenAIProvider]
-        
-        for provider_class in providers_to_try:
-            provider = provider_class()
-            if provider.is_available():
-                logger.info(f"Using fallback provider: {provider.__class__.__name__}")
-                return provider
+                logger.warning("Google AI Studio not available")
         
         # If no provider is available, raise an error
-        raise Exception("No AI provider is configured. Please set GOOGLE_AI_API_KEY, DEEPSEEK_API_KEY, or OPENAI_API_KEY")
+        raise Exception("No AI provider is configured. Please set GOOGLE_AI_API_KEY")
 
 class AIService:
     """Main AI service that uses the appropriate provider"""
