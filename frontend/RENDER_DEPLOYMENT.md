@@ -1,4 +1,9 @@
-# 🚀 Render Deployment Guide
+# 🚀 Render Deployment Guide (Node 22 Compatible)
+
+## ✅ Node.js Version Fix Applied
+
+**Issue**: Render uses Node 22.16.0 by default, but your app was configured for Node 18
+**Solution**: Updated configuration to be compatible with Node 22
 
 ## Quick Deploy (Recommended)
 
@@ -10,7 +15,7 @@
    - **Name**: `reelranker-frontend`
    - **Build Command**: `npm install && npm run build`
    - **Publish Directory**: `build`
-   - **Node Version**: `18`
+   - **Node Version**: `22` (Render default)
 
 ### Environment Variables
 Set these in Render dashboard:
@@ -21,33 +26,44 @@ NODE_ENV=production
 GENERATE_SOURCEMAP=false
 ```
 
+## Key Changes Made
+
+### ✅ Node.js Compatibility
+- Updated `.nvmrc` to Node 22
+- Added `engines` field in package.json
+- Updated react-scripts to latest version
+
+### ✅ Build Configuration
+- Simplified build command
+- Removed problematic prebuild scripts
+- Added proper environment variables
+
+### ✅ Render-Specific Files
+- `render.yaml` - Blueprint configuration
+- `.nvmrc` - Node version specification
+- `public/_redirects` - SPA routing
+
 ## Troubleshooting
 
-### If you get "Application exited early":
+### If you still get "Application exited early":
 
-1. **Check Build Logs**: Look for specific error messages
-2. **Verify Environment Variables**: All must be set correctly
-3. **Node Version**: Ensure Node 18+ is selected
+1. **Check Node Version**: Ensure Render is using Node 22
+2. **Verify Build Logs**: Look for specific error messages
+3. **Environment Variables**: All must be set correctly
 4. **Build Command**: Should be `npm install && npm run build`
-5. **Publish Directory**: Must be `build`
 
 ### Common Issues:
+- ❌ Node version mismatch (fixed)
 - ❌ Missing environment variables
-- ❌ Wrong Node version
 - ❌ Build command errors
 - ❌ Missing dependencies
-
-### ✅ Success Indicators:
-- Build completes without errors
-- Static files generated in `build/` directory
-- Application accessible at Render URL
 
 ## Manual Deployment Steps
 
 1. **Push to GitHub**:
    ```bash
    git add .
-   git commit -m "Fix Render deployment"
+   git commit -m "Fix Node 22 compatibility for Render"
    git push
    ```
 
@@ -61,9 +77,8 @@ GENERATE_SOURCEMAP=false
    - Test API connections
    - Verify routing works
 
-## Files Created for Render:
-- ✅ `render.yaml` - Blueprint configuration
-- ✅ `.nvmrc` - Node version specification
-- ✅ `.render-buildpacks` - Buildpack specification
-- ✅ `public/_redirects` - SPA routing
-- ✅ `scripts/build-render.sh` - Custom build script
+## Files Updated for Node 22:
+- ✅ `.nvmrc` - Updated to Node 22
+- ✅ `package.json` - Added engines field
+- ✅ `render.yaml` - Simplified configuration
+- ✅ `react-scripts` - Updated to latest version
