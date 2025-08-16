@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReelRanker - Backend Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔗 ReelRanker Backend Connection Test</h1>
+    <p>This page tests the connection to your hosted backend at <strong>https://reel-ranker.onrender.com</strong></p>
+    
+    <div>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testTrending()">Test Trending Shorts</button>
+        <button onclick="testGenerate()">Test Content Generation</button>
+        <button onclick="testAll()">Test All Endpoints</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'https://reel-ranker.onrender.com';
+        
+        function showResult(title, status, data = null) {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${status}`;
+            
+            let content = `<strong>${title}</strong>`;
+            if (data) {
+                content += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            div.innerHTML = content;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function testHealth() {
+            try {
+                showResult('Testing Health Endpoint...', 'loading');
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('✅ Health Check - SUCCESS', 'success', data);
+                } else {
+                    showResult('❌ Health Check - FAILED', 'error', data);
+                }
+            } catch (error) {
+                showResult('❌ Health Check - ERROR', 'error', { error: error.message });
+            }
+        }
+        
+        async function testTrending() {
+            try {
+                showResult('Testing Trending Shorts...', 'loading');
+                const response = await fetch(`${API_BASE_URL}/api/v1/shorts/trending`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('✅ Trending Shorts - SUCCESS', 'success', {
+                        topic: data.topic,
+                        video_count: data.videos?.length || 0,
+                        first_video: data.videos?.[0]?.title || 'No videos'
+                    });
+                } else {
+                    showResult('❌ Trending Shorts - FAILED', 'error', data);
+                }
+            } catch (error) {
+                showResult('❌ Trending Shorts - ERROR', 'error', { error: error.message });
+            }
+        }
+        
+        async function testGenerate() {
+            try {
+                showResult('Testing Content Generation...', 'loading');
+                const response = await fetch(`${API_BASE_URL}/api/v1/generate/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: 'test', style: 'viral' })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('✅ Content Generation - SUCCESS', 'success', {
+                        titles_count: data.titles?.length || 0,
+                        hashtags_count: data.hashtags?.length || 0,
+                        provider: data.provider
+                    });
+                } else {
+                    showResult('❌ Content Generation - FAILED', 'error', data);
+                }
+            } catch (error) {
+                showResult('❌ Content Generation - ERROR', 'error', { error: error.message });
+            }
+        }
+        
+        async function testAll() {
+            document.getElementById('results').innerHTML = '';
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testTrending();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testGenerate();
+        }
+    </script>
+</body>
+</html>
